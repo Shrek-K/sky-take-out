@@ -7,7 +7,12 @@ sky:
     username: root
     password: 123456
   alioss:
-    access-key-id:
-    access-key-secret:
+    access-key-id: LTAI5tNVZ7iN1pPqnnne97wh
+    access-key-secret: P8vnVJhH2gmRnm4sCFD7UtNMOxIgvq
     endpoint: oss-cn-hangzhou.aliyuncs.com
     bucket-name: slk-sky
+  redis:
+    host: localhost
+    port: 6379
+    password: 123456
+    database: 0
