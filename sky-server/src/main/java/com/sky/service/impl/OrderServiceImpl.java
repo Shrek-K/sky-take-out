@@ -5,9 +5,7 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
-import com.sky.dto.OrdersPageQueryDTO;
-import com.sky.dto.OrdersPaymentDTO;
-import com.sky.dto.OrdersSubmitDTO;
+import com.sky.dto.*;
 import com.sky.entity.*;
 import com.sky.exception.AddressBookBusinessException;
 import com.sky.exception.OrderBusinessException;
@@ -20,7 +18,9 @@ import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
+import io.swagger.models.auth.In;
 import lombok.extern.slf4j.Slf4j;
+import org.aspectj.weaver.ast.Or;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
@@ -304,6 +304,8 @@ public class OrderServiceImpl implements OrderService {
         return orderStatisticsVO;
     }
 
+
+
     private List<OrderVO> getOrderVOList(Page<Orders> page) {
         //定义返回的订单菜品信息
         List<OrderVO> orderVOList=new ArrayList<>();
@@ -338,5 +340,50 @@ public class OrderServiceImpl implements OrderService {
         return String.join("",orderDishList);
     }
 
+    /**
+     * 接单
+     * @param ordersConfirmDTO
+     */
+    public void confirm(OrdersConfirmDTO ordersConfirmDTO) {
+        //封装到Orders订单中
+        Orders orders=Orders.builder().id(ordersConfirmDTO.getId()).status(Orders.CONFIRMED).build();
+        //更新订单状态
+        orderMapper.update(orders);
+    }
+
+    /**
+     * 拒单
+     * @param ordersRejectionDTO
+     */
+    public void rejection(OrdersRejectionDTO ordersRejectionDTO) {
+        //根据id查询订单
+        Orders ordersDB = orderMapper.getById(ordersRejectionDTO.getId());
+        //订单状态不为待接单则抛出异常
+        if(ordersDB==null||!ordersDB.getStatus().equals(Orders.TO_BE_CONFIRMED)){
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        Integer payStatus=ordersDB.getPayStatus();
+        if(payStatus.equals(Orders.PAID)){
+            //用户已支付，需要退款
+            /*String refund = weChatPayUtil.refund(
+                    ordersDB.getNumber(),
+                    ordersDB.getNumber(),
+                    new BigDecimal(0.01),
+                    new BigDecimal(0.01));
+            log.info("申请退款");*/
+            log.info("给订单{}退款",ordersDB.getNumber());
+        }
+        //拒单修改状态、拒单原因、拒单时间
+        Orders orders=new Orders();
+
+        orders.setStatus(Orders.CANCELLED);
+
+        orders.setId(ordersDB.getId());
+        orders.setRejectionReason(ordersRejectionDTO.getRejectionReason());
+        orders.setCancelTime(LocalDateTime.now());
+
+        orderMapper.update(orders);
+    }
 
 }
