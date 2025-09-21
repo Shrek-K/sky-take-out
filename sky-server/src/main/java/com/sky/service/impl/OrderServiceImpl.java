@@ -30,6 +30,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -249,6 +250,24 @@ public class OrderServiceImpl implements OrderService {
         orders.setCancelReason("用户取消");
         orders.setCancelTime(LocalDateTime.now());
         orderMapper.update(orders);
+    }
+
+    /**
+     * 再来一单
+     * @param id
+     */
+    public void repetition(Long id) {
+        Long userId=BaseContext.getCurrentId();
+        List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderId(id);
+        List<ShoppingCart> shoppingCartList = orderDetailList.stream().map(x -> {
+            ShoppingCart shoppingCart = new ShoppingCart();
+            //原订单菜品信息肤质都购物车中
+            BeanUtils.copyProperties(x, shoppingCart, "id");
+            shoppingCart.setUserId(userId);
+            shoppingCart.setCreateTime(LocalDateTime.now());
+            return shoppingCart;
+        }).collect(Collectors.toList());
+        shoppingCartMapper.insertBatch(shoppingCartList);
     }
 
 
