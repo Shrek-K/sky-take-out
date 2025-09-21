@@ -55,4 +55,6 @@ public interface OrderMapper {
      */
     @Update("update orders set status=#{orderStatus},pay_status=#{orderPaidStatus},checkout_time=#{checkOutTime} where number=#{orderNumber}")
     void updateStatus(Integer orderStatus, Integer orderPaidStatus, LocalDateTime checkOutTime, String orderNumber);
+    @Select("select count(*) from orders where status=#{status};")
+    Integer countStatus(Integer toBeConfirmed);
 }
